@@ -1,6 +1,8 @@
-import datetime
 import boto3
 import json
+
+
+from utils.json_encoder import json_encoder
 
 
 def get_all_regions():
@@ -17,11 +19,6 @@ def get_api_gateways_for_region(client):
 
 def get_authorizers(client, api_id):
     return client.get_authorizers(restApiId=api_id)['items']
-
-
-def default(o):
-  if type(o) is datetime.date or type(o) is datetime.datetime:
-    return o.isoformat()
 
 
 if __name__ == '__main__':
@@ -51,6 +48,6 @@ if __name__ == '__main__':
     data_str = json.dumps(all_data,
                           indent=4,
                           sort_keys=True,
-                          default=default)
+                          default=json_encoder)
 
     file('api-gateways.json', 'w').write(data_str)
