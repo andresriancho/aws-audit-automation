@@ -1,10 +1,10 @@
-import datetime
 import boto3
 import json
 import sys
 
 
 from botocore.exceptions import EndpointConnectionError
+from utils.json_encoder import json_encoder
 
 
 def get_all_regions():
@@ -25,14 +25,8 @@ def get_id_pools(client):
         yield id_pool
 
 
-def default(o):
-  if type(o) is datetime.date or type(o) is datetime.datetime:
-    return o.isoformat()
-
-
 if __name__ == '__main__':
     all_data = {}
-    
 
     for region in get_all_regions():
         all_data[region] = {}
@@ -53,10 +47,9 @@ if __name__ == '__main__':
             sys.stdout.write('.')
             sys.stdout.flush()
 
-
     data_str = json.dumps(all_data,
                           indent=4,
                           sort_keys=True,
-                          default=default)
+                          default=json_encoder)
 
     file('id_pools.json', 'w').write(data_str)
