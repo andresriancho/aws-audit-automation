@@ -44,6 +44,9 @@ if __name__ == '__main__':
             all_data[region][api_id] = {}
             all_data[region][api_id]['main'] = rest_api
             all_data[region][api_id]['authorizers'] = authorizers
+        
+        else:
+            print('Region: %s / No API gateways' % region)
 
     data_str = json.dumps(all_data,
                           indent=4,
