@@ -3,16 +3,11 @@ import json
 
 
 from utils.json_encoder import json_encoder
+from utils.session import get_session
+from utils.regions import get_all_regions
 
 
-def get_all_regions():
-    client = boto3.client('ec2')
-
-    for region in client.describe_regions()['Regions']:
-        yield region['RegionName']
-
-
-def get_api_gateways_for_region(client):  
+def get_api_gateways_for_region(client):
     for rest_api in client.get_rest_apis()['items']:
         yield rest_api
 
@@ -21,12 +16,13 @@ def get_authorizers(client, api_id):
     return client.get_authorizers(restApiId=api_id)['items']
 
 
-if __name__ == '__main__':
+def main():
     all_data = {}
+    session = get_session()
 
-    for region in get_all_regions():
+    for region in get_all_regions(session):
         all_data[region] = {}
-        client = boto3.client('apigateway', region_name=region)
+        client = session.client('apigateway', region_name=region)
 
         for rest_api in get_api_gateways_for_region(client):
             api_id = rest_api['id']
@@ -34,7 +30,7 @@ if __name__ == '__main__':
             
             try:
                 authorizers = get_authorizers(client, api_id)
-            except Exception, e:
+            except Exception as e:
                 msg = 'Failed to retrieve authorizers for %s @ %s. Error: "%s"'
                 args = (api_id, region, e)
                 print(msg % args)
@@ -54,3 +50,7 @@ if __name__ == '__main__':
                           default=json_encoder)
 
     file('api-gateways.json', 'w').write(data_str)
+
+
+if __name__ == '__main__':
+    main()
