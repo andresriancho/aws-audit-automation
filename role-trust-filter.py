@@ -1,7 +1,7 @@
 import json
 import pprint
 
-data = json.loads(file('role-details.json').read())
+data = json.loads(open('output/role-details.json').read())
 
 for role in data:
 	role_data = data[role]
@@ -12,7 +12,7 @@ for role in data:
 	statements = role_data['AssumeRolePolicyDocument']['Statement']
 
 	if len(statements) > 1:
-		print role
+		print(role)
 		pprint.pprint(statements)
 		continue
 
@@ -26,12 +26,12 @@ for role in data:
 
 	principals = first_statement['Principal']
 	if 'Service' not in principals:
-		print role
+		print(role)
 		pprint.pprint(statements)
 		continue
 
 	services = first_statement['Principal']['Service']
-	if isinstance(services, basestring):
+	if isinstance(services, str):
 		services = [services]
 
 	for service in services:
@@ -42,5 +42,5 @@ for role in data:
 	if should_continue:
 		continue
 
-	print role
+	print(role)
 	pprint.pprint(statements)

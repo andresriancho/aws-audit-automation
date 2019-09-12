@@ -9,16 +9,18 @@ Calls these (from boto) to get an idea of who's behind a set of credentials
     aws iam list-groups-for-user --user-name=...
     aws iam list-attached-group-policies --group-name ...
 """
+import os
 import boto3
 
 from utils.json_writer import json_writer
 from utils.json_printer import json_printer
 from utils.remove_metadata import remove_metadata
 from utils.get_user_name import get_principal_name
+from utils.session import get_session
 
 
-def get_policy(policy_arn):
-    iam_client = boto3.client('iam')
+def get_policy(session, policy_arn):
+    iam_client = session.client('iam')
 
     policy = iam_client.get_policy(
         PolicyArn=policy_arn
@@ -36,17 +38,23 @@ def get_policy(policy_arn):
 
 
 def main():
+    session = get_session()
+
     output = {}
 
-    sts_client = boto3.client('sts')
+    sts_client = session.client('sts')
     sts_data = sts_client.get_caller_identity()
     sts_data = remove_metadata(sts_data)
 
     output['sts'] = sts_data
 
-    principal_type, name = get_principal_name(sts_data)
+    principal_type, name, session_name = get_principal_name(sts_data)
 
-    json_writer('whoami.json', output)
+    output['principal_type'] = principal_type
+    output['principal_name'] = name
+
+    os.makedirs('output', exist_ok=True)
+    json_writer('output/whoami.json', output)
     json_printer(output)
 
 

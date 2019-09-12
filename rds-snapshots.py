@@ -1,13 +1,13 @@
-import datetime
-import boto3
+import os
 import json
 
+import boto3
 
-def get_all_regions():
-    client = boto3.client('ec2')
-
-    for region in client.describe_regions()['Regions']:
-        yield region['RegionName']
+from utils.session import get_session
+from utils.regions import get_all_regions
+from utils.json_encoder import json_encoder
+from utils.json_writer import json_writer
+from utils.json_printer import json_printer
 
 
 def get_shapshots_for_region(client):
@@ -22,17 +22,14 @@ def get_snapshot_attributes(client, snapshot_id):
     return client.describe_db_snapshot_attributes(DBSnapshotIdentifier=snapshot_id)['DBSnapshotAttributesResult']
 
 
-def default(o):
-  if type(o) is datetime.date or type(o) is datetime.datetime:
-    return o.isoformat()
+def main():
+    session = get_session()
 
-
-if __name__ == '__main__':
     all_data = {}
 
-    for region in get_all_regions():
+    for region in get_all_regions(session):
         all_data[region] = {}
-        client = boto3.client('rds', region_name=region)
+        client = session.client('rds', region_name=region)
 
         for snapshot in get_shapshots_for_region(client):
             snapshot_id = snapshot['DBSnapshotIdentifier']
@@ -40,7 +37,7 @@ if __name__ == '__main__':
             
             try:
                 attributes = get_snapshot_attributes(client, snapshot_id)
-            except Exception, e:
+            except Exception as e:
                 msg = 'Failed to retrieve attributes for %s @ %s. Error: "%s"'
                 args = (snapshot_id, region, e)
                 print(msg % args)
@@ -53,9 +50,10 @@ if __name__ == '__main__':
         else:
             print('Region: %s / No snapshots found' % (region,))
 
-    data_str = json.dumps(all_data,
-                          indent=4,
-                          sort_keys=True,
-                          default=default)
+    os.makedirs('output', exist_ok=True)
+    json_writer('output/rds-snapshots.json', all_data)
+    json_printer(all_data)
 
-    file('rds-snapshots.json', 'w').write(data_str)
+
+if __name__ == '__main__':
+    main()

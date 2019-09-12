@@ -1,6 +1,13 @@
-import datetime
-import boto3
+import os
 import json
+
+import boto3
+
+from utils.session import get_session
+from utils.regions import get_all_regions
+from utils.json_encoder import json_encoder
+from utils.json_writer import json_writer
+from utils.json_printer import json_printer
 
 
 def get_role_names(client):
@@ -17,15 +24,12 @@ def get_role_details(client, role_name):
     return role
 
 
-def default(o):
-  if type(o) is datetime.date or type(o) is datetime.datetime:
-    return o.isoformat()
+def main():
+    session = get_session()
 
-
-if __name__ == '__main__':
     all_data = {}
 
-    client = boto3.client('iam')
+    client = session.client('iam')
 
     for role_name in get_role_names(client):
         print('RoleName: %s' % (role_name,))
@@ -34,16 +38,17 @@ if __name__ == '__main__':
 
         try:
             role_details = get_role_details(client, role_name)
-        except Exception, e:
+        except Exception as e:
             msg = 'Failed to retrieve role for %s. Error: "%s"'
             args = (role_name, e)
             print(msg % args)
 
         all_data[role_name] = role_details
 
-    data_str = json.dumps(all_data,
-                          indent=4,
-                          sort_keys=True,
-                          default=default)
+    os.makedirs('output', exist_ok=True)
+    json_writer('output/role-details.json', all_data)
+    json_printer(all_data)
 
-    file('role-details.json', 'w').write(data_str)
+
+if __name__ == '__main__':
+    main()

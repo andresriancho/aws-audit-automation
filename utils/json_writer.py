@@ -9,4 +9,4 @@ def json_writer(filename, data):
                           sort_keys=True,
                           default=json_encoder)
 
-    file(filename, 'w').write(data_str)
+    open(filename, 'w').write(data_str)

@@ -1,17 +1,13 @@
-import boto3
-import json
+import os
 import sys
+import boto3
 
-
-from botocore.exceptions import EndpointConnectionError
 from utils.json_encoder import json_encoder
-
-
-def get_all_regions():
-    client = boto3.client('ec2')
-
-    for region in client.describe_regions()['Regions']:
-        yield region['RegionName']
+from utils.json_writer import json_writer
+from utils.json_printer import json_printer
+from utils.session import get_session
+from utils.regions import get_all_regions
+from botocore.exceptions import EndpointConnectionError
 
 
 def get_id_pools(client):  
@@ -24,13 +20,14 @@ def get_id_pools(client):
     for id_pool in id_pools:
         yield id_pool
 
+def main():
+    session = get_session()
 
-if __name__ == '__main__':
     all_data = {}
 
-    for region in get_all_regions():
+    for region in get_all_regions(session):
         all_data[region] = {}
-        client = boto3.client('cognito-identity', region_name=region)
+        client = session.client('cognito-identity', region_name=region)
 
         print('Processing region: %s' % region)
 
@@ -47,9 +44,10 @@ if __name__ == '__main__':
             sys.stdout.write('.')
             sys.stdout.flush()
 
-    data_str = json.dumps(all_data,
-                          indent=4,
-                          sort_keys=True,
-                          default=json_encoder)
+    os.makedirs('output', exist_ok=True)
+    json_writer('output/cognito-id-pools.json', all_data)
+    json_printer(all_data)
 
-    file('id_pools.json', 'w').write(data_str)
+
+if __name__ == '__main__':
+    main()

@@ -1,6 +1,6 @@
 import json
 
-rds_snapshots = json.loads(file('rds-snapshots.json').read())
+rds_snapshots = json.loads(open('output/rds-snapshots.json').read())
 
 for region in rds_snapshots:
     
@@ -9,13 +9,13 @@ for region in rds_snapshots:
         db_attrs = rds_snapshots[region][snapshot]['attributes']['DBSnapshotAttributes']
         
         if len(db_attrs) > 1:
-            print snapshot
+            print(snapshot)
             continue
 
         if db_attrs[0]['AttributeName'] != 'restore':
-            print snapshot
+            print(snapshot)
             continue
 
         if db_attrs[0]['AttributeValues'] != []:
-            print snapshot
+            print(snapshot)
             continue

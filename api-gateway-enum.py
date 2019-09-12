@@ -1,8 +1,9 @@
+import os
 import boto3
-import json
-
 
 from utils.json_encoder import json_encoder
+from utils.json_writer import json_writer
+from utils.json_printer import json_printer
 from utils.session import get_session
 from utils.regions import get_all_regions
 
@@ -44,12 +45,9 @@ def main():
         else:
             print('Region: %s / No API gateways' % region)
 
-    data_str = json.dumps(all_data,
-                          indent=4,
-                          sort_keys=True,
-                          default=json_encoder)
-
-    file('api-gateways.json', 'w').write(data_str)
+    os.makedirs('output', exist_ok=True)
+    json_writer('output/api-gateways.json', all_data)
+    json_printer(all_data)
 
 
 if __name__ == '__main__':

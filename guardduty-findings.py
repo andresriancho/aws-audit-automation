@@ -1,10 +1,13 @@
+import os
 import sys
 import json
 import boto3
-import argparse
 
 from utils.session import get_session
 from utils.regions import get_all_regions
+from utils.json_encoder import json_encoder
+from utils.json_writer import json_writer
+from utils.json_printer import json_printer
 
 
 def get_findings(session, region):
@@ -48,11 +51,9 @@ def main():
     for region in get_all_regions(session):
         all_data[region] = get_findings(session, region)
 
-    data_str = json.dumps(all_data,
-                          indent=4,
-                          sort_keys=True)
-
-    open('guardduty.json', 'w').write(data_str)
+    os.makedirs('output', exist_ok=True)
+    json_writer('output/guardduty.json', all_data)
+    json_printer(all_data)
 
 
 if __name__ == '__main__':

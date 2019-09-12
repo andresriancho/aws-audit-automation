@@ -1,21 +1,16 @@
-import datetime
-import boto3
+import os
 import json
 
+import boto3
 
-def get_all_regions():
-    all_regions = []
-    client = boto3.client('ec2')
-
-    for region in client.describe_regions()['Regions']:
-        all_regions.append(region['RegionName'])
-
-    all_regions.sort()
-    return all_regions
+from utils.session import get_session
+from utils.regions import get_all_regions
+from utils.json_encoder import json_encoder
+from utils.json_writer import json_writer
+from utils.json_printer import json_printer
 
 
 def get_keys_for_region(client):
-    client = boto3.client('kms', region_name=region)
     region_keys = client.list_keys(Limit=1000)['Keys']
     return [k['KeyId'] for k in region_keys]
 
@@ -36,20 +31,21 @@ def get_key_policies(client, key_id):
     return policies
 
 
-def default(o):
-    if type(o) is datetime.date or type(o) is datetime.datetime:
-        return o.isoformat()
+def main():
+    session = get_session()
 
-
-if __name__ == '__main__':
-    all_regions = get_all_regions()
     all_data = {}
 
-    for region in all_regions:
+    for region in get_all_regions(session):
         all_data[region] = {}
-        client = boto3.client('kms', region_name=region)
+        client = session.client('kms', region_name=region)
 
         keys_for_region = get_keys_for_region(client)
+
+        if not keys_for_region:
+            print('Region: %s / No KMS keys' % region)
+            continue
+
         for key in keys_for_region:
             print('Region: %s / KeyId: %s' % (region, key))
 
@@ -58,14 +54,14 @@ if __name__ == '__main__':
 
             try:
                 grants = get_key_grants(client, key)
-            except Exception, e:
+            except Exception as e:
                 msg = 'Failed to retrieve grants for %s @ %s. Error: "%s"'
                 args = (key, region, e)
                 print(msg % args)
 
             try:
                 policies = get_key_policies(client, key)
-            except Exception, e:
+            except Exception as e:
                 msg = 'Failed to retrieve policies for %s @ %s. Error: "%s"'
                 args = (key, region, e)
                 print(msg % args)
@@ -74,9 +70,10 @@ if __name__ == '__main__':
             all_data[region][key]['grants'] = grants
             all_data[region][key]['policies'] = policies
 
-    data_str = json.dumps(all_data,
-                          indent=4,
-                          sort_keys=True,
-                          default=default)
+    os.makedirs('output', exist_ok=True)
+    json_writer('output/key-grants.json', all_data)
+    json_printer(all_data)
 
-    file('key-grants.json', 'w').write(data_str)
+
+if __name__ == '__main__':
+    main()
