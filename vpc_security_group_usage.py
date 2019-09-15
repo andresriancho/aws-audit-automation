@@ -10,11 +10,14 @@ from utils.session import get_session
 
 def main():
     session = get_session()
+    
+    # TODO: Change this to a command line parameter
+    security_group_id = 'sg-xxxx'
 
     ec2_client = session.client('ec2', region_name='us-east-1')
     
     filters = [{'Name': 'group-id',
-                'Values': ['sg-04d318977c82abb58']}]
+                'Values': [security_group_id]}]
     result = ec2_client.describe_network_interfaces(Filters=filters)
 
     result.pop('ResponseMetadata')
