@@ -1,5 +1,8 @@
 import os
+
 import boto3
+
+from botocore.exceptions import ClientError
 
 from utils.json_encoder import json_encoder
 from utils.json_writer import json_writer
@@ -9,8 +12,14 @@ from utils.regions import get_all_regions
 
 
 def get_api_gateways_for_region(client):
-    for rest_api in client.get_rest_apis()['items']:
-        yield rest_api
+    try:
+        for rest_api in client.get_rest_apis()['items']:
+            yield rest_api
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'AccessDeniedException':
+            print("%s" % e)
+        else:
+            print("Unexpected error: %s" % e)
 
 
 def get_authorizers(client, api_id):
