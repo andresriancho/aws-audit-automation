@@ -11,10 +11,11 @@ from utils.session import get_session
 def main():
     session = get_session()
     
-    # TODO: Change this to a command line parameter
-    security_group_id = 'sg-xxxx'
+    # TODO: Change this to a command line parameters
+    security_group_id = 'sg-0ea...'
+    region_name = 'us-west-2'
 
-    ec2_client = session.client('ec2', region_name='us-east-1')
+    ec2_client = session.client('ec2', region_name=region_name)
     
     filters = [{'Name': 'group-id',
                 'Values': [security_group_id]}]
