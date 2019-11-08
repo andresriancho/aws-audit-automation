@@ -5,7 +5,6 @@ import boto3
 
 from utils.session import get_session
 from utils.regions import get_all_regions
-from utils.json_encoder import json_encoder
 from utils.json_writer import json_writer
 from utils.json_printer import json_printer
 from utils.boto_error_handling import yield_handling_errors
