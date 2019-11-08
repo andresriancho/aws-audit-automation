@@ -2,3 +2,4 @@ pygments
 boto3
 click
 python-dateutil
+tqdm
