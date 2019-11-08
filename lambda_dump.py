@@ -8,6 +8,7 @@ from utils.regions import get_all_regions
 from utils.json_encoder import json_encoder
 from utils.json_writer import json_writer
 from utils.json_printer import json_printer
+from utils.boto_error_handling import yield_handling_errors
 
 
 def get_lambda_functions_for_region(client):
@@ -53,9 +54,9 @@ def main():
         all_data[region] = {}
         client = session.client('lambda', region_name=region)
 
-        lambda_functions = get_lambda_functions_for_region(client)
+        iterator = yield_handling_errors(get_lambda_functions_for_region, client)
 
-        for lambda_function in lambda_functions:
+        for lambda_function in iterator:
             function_name = lambda_function['FunctionName']
             print('Region: %s / Lambda function: %s' % (region, function_name))
 

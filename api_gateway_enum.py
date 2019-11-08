@@ -2,24 +2,17 @@ import os
 
 import boto3
 
-from botocore.exceptions import ClientError
-
 from utils.json_encoder import json_encoder
 from utils.json_writer import json_writer
 from utils.json_printer import json_printer
 from utils.session import get_session
 from utils.regions import get_all_regions
+from utils.boto_error_handling import yield_handling_errors
 
 
 def get_api_gateways_for_region(client):
-    try:
-        for rest_api in client.get_rest_apis()['items']:
-            yield rest_api
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'AccessDeniedException':
-            print("%s" % e)
-        else:
-            print("Unexpected error: %s" % e)
+    for rest_api in client.get_rest_apis()['items']:
+        yield rest_api
 
 
 def get_authorizers(client, api_id):
@@ -34,7 +27,9 @@ def main():
         all_data[region] = {}
         client = session.client('apigateway', region_name=region)
 
-        for rest_api in get_api_gateways_for_region(client):
+        iterator = yield_handling_errors(get_api_gateways_for_region, client)
+
+        for rest_api in iterator:
             api_id = rest_api['id']
             print('Region: %s / API ID: %s' % (region, api_id))
             

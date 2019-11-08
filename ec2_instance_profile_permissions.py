@@ -4,13 +4,12 @@ import sys
 
 import boto3
 
-from botocore.exceptions import ClientError
-
 from utils.json_encoder import json_encoder
 from utils.json_writer import json_writer
 from utils.json_printer import json_printer
 from utils.session import get_session
 from utils.regions import get_all_regions
+from utils.boto_error_handling import yield_handling_errors
 
 
 def get_instance_profiles(ec2_client, iam_client):
@@ -54,17 +53,14 @@ def main():
 
         print('Processing region: %s' % region)
 
-        try:
-            for i, instance_profile_policy in enumerate(get_instance_profiles(ec2_client, iam_client)):
-                all_data[region][i] = instance_profile_policy
-                
-                sys.stdout.write('.')
-                sys.stdout.flush()
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'UnauthorizedOperation':
-                print("%s" % e)
-            else:
-                print("Unexpected error: %s" % e)
+        iterator = yield_handling_errors(get_instance_profiles, ec2_client, iam_client)
+        iterator = enumerate(iterator)
+
+        for i, instance_profile_policy in iterator:
+            all_data[region][i] = instance_profile_policy
+            
+            sys.stdout.write('.')
+            sys.stdout.flush()
 
     os.makedirs('output', exist_ok=True)
     json_writer('output/instance_profile_policies.json', all_data)

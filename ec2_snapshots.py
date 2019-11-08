@@ -4,13 +4,12 @@ import sys
 
 import boto3
 
-from botocore.exceptions import ClientError
-
 from utils.json_encoder import json_encoder
 from utils.json_writer import json_writer
 from utils.json_printer import json_printer
 from utils.session import get_session
 from utils.regions import get_all_regions
+from utils.boto_error_handling import yield_handling_errors
 
 
 def get_snapshots(ec2_client):
@@ -57,17 +56,14 @@ def main():
 
         print('Processing region: %s' % region)
 
-        try:
-            for i, snapshot in enumerate(get_snapshots(ec2_client)):
-                all_data[region][i] = snapshot
-                
-                sys.stdout.write('.')
-                sys.stdout.flush()
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'UnauthorizedOperation':
-                print("%s" % e)
-            else:
-                print("Unexpected error: %s" % e)
+        iterator = yield_handling_errors(get_snapshots, ec2_client)
+        iterator = enumerate(iterator)
+
+        for i, snapshot in iterator:
+            all_data[region][i] = snapshot
+            
+            sys.stdout.write('.')
+            sys.stdout.flush()
 
         if all_data[region]:
             print('\n')
