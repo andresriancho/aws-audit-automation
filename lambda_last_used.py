@@ -151,7 +151,7 @@ def dump_lambda_functions(session):
         iterator = yield_handling_errors(get_lambda_functions_for_region, client)
 
         for lambda_function in iterator:
-            function_name = lambda_function['FunctionName']
+            function_name = lambda_function['FunctionArn']
             all_lambda_functions.append(function_name)
 
     return all_lambda_functions
