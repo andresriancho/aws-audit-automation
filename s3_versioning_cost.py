@@ -47,8 +47,7 @@ def get_size_for_previous_versions(session, bucket):
     s3 = session.client('s3')
     paginator = s3.get_paginator('list_object_versions')
 
-    response_iterator = paginator.paginate(Bucket=bucket,
-                                           Prefix='adsmetrics')
+    response_iterator = paginator.paginate(Bucket=bucket)
 
     for response in response_iterator:
 
