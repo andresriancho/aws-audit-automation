@@ -27,45 +27,28 @@ def print_interesting(record):
     print(record_name)
 
 
-def dump_route53_records(route53_client, zone_name, zone_id, all_data, startrrname=''):
-    if startrrname:
-        response = route53_client.list_resource_record_sets(
-            HostedZoneId=zone_id,
-            StartRecordName=startrrname
-        )
-    else:
-        response = route53_client.list_resource_record_sets(
-            HostedZoneId=zone_id
-        )
+def dump_route53_records(route53_client, zone_name, zone_id, all_data):
+    pager = route53_client.get_paginator('list_resource_record_sets')
 
-    for record in response['ResourceRecordSets']:
-        record_name = record.get('Name', None)
+    for page in pager.paginate(HostedZoneId=zone_id):
+        for record in page['ResourceRecordSets']:
+            record_name = record.get('Name', None)
 
-        if record_name is None:
-            continue
+            if record_name is None:
+                continue
 
-        if record_name in all_data:
-            continue
+            if record_name in all_data:
+                continue
 
-        record_name = record_name.replace('\\052', '*')
-        record['Name'] = record_name
+            record_name = record_name.replace('\\052', '*')
+            record_name = record_name[:-1]
+            record['Name'] = record_name
 
-        if zone_name not in all_data:
-            all_data[zone_name] = list()
-            
-        all_data[zone_name].append(record)
+            if zone_name not in all_data:
+                all_data[zone_name] = list()
 
-        print_interesting(record)
-
-    if 'NextRecordName' not in response['ResourceRecordSets']:
-        return all_data
-
-    dump_route53_records(
-        route53_client,
-        zone_name,
-        zone_id,
-        all_data,
-        startrrname=response['ResourceRecordSets']['NextRecordName'])
+            all_data[zone_name].append(record)
+            print_interesting(record)
 
     return all_data
 
