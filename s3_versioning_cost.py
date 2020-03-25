@@ -52,6 +52,8 @@ def get_size_for_previous_versions(session, bucket):
     for response in response_iterator:
 
         versions = response.get('Versions')
+        if versions is None:
+            continue
 
         iter_count += 1
 
@@ -79,7 +81,8 @@ def get_size_for_previous_versions(session, bucket):
 def main():
     bucket, session = parse_arguments()
 
-    get_size_for_previous_versions(session, bucket)
+    total = get_size_for_previous_versions(session, bucket)
+    print(total)
 
 
 if __name__ == '__main__':
