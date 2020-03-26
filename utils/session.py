@@ -8,7 +8,8 @@ def get_session():
     parser.add_argument(
         '--profile',
         help='AWS profile from ~/.aws/credentials',
-        required=True
+        required=False,
+        default='default'
     )
     
     args = parser.parse_args()
