@@ -15,9 +15,6 @@ def print_interesting(record):
     if record.get('Type') not in PRINT_NAMES:
         return
 
-    # remove trailing dot
-    record_name = record_name[:-1]
-
     if record_name.endswith('internal'):
         return
 
@@ -64,6 +61,9 @@ def main():
     for zone in zone_info.get('HostedZones'):
         zone_name = zone['Name']
         zone_id = zone['Id']
+
+        # remove trailing dot
+        zone_name = zone_name[:-1]
 
         dump_route53_records(route53_client, zone_name, zone_id, all_data)
 
